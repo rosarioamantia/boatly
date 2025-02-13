@@ -3,6 +3,12 @@
 #include <Adafruit_SSD1306.h>
 #include <Wire.h> // libreria per I2C
 
+#include "esp_bt_main.h"
+#include "esp_bt_device.h"
+
+#define uS_TO_S_FACTOR 1000000  /* Conversion factor for micro seconds to seconds */
+#define TIME_TO_SLEEP  5        /* Time ESP32 will go to sleep (in seconds) */
+
 #define OLED_SDA 21 // data
 #define OLED_SCL 22 // clock
 #define OLED_RESET -1
@@ -17,8 +23,28 @@
 
 int counter = 0;
 bool withDisplay = false;
+//uint8_t test = 125;
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET); //&Wire = riferimento ad I2C
+
+bool initBluetooth()
+{
+  if (!btStart()) {
+    Serial.println("Failed to initialize controller");
+    return false;
+  }
+ 
+  if (esp_bluedroid_init() != ESP_OK) {
+    Serial.println("Failed to initialize bluedroid");
+    return false;
+  }
+ 
+  if (esp_bluedroid_enable() != ESP_OK) {
+    Serial.println("Failed to enable bluedroid");
+    return false;
+  }
+ 
+}
 
 void initDisplay(){
   Serial.println("INIT DISPLAY");
@@ -43,7 +69,21 @@ void initDisplay(){
   }
 }
 
+enum Mode {
+  SEA,
+  HARBOR
+};
+
+typedef struct  {
+  int8_t IDDEV[3];
+} NotifyPacket;
+
+NotifyPacket presencePacket;
+
+enum Mode mode = HARBOR;
+
 void setup() {
+  esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
   Serial.begin(115200);
   Serial.println("LoRa Sender");
   LoRa.setPins(cs, rst, dio0);
@@ -64,25 +104,62 @@ void setup() {
   //LoRa.setSyncWord(0xF3);
   Serial.println("LoRa Initializing OK!");
   initDisplay();
+  initBluetooth();
+
+  //ottenere l'indirizzo MAC univoco del modulo Bluetooth integrato nel dispositivo
+  const uint8_t* device_mac_address = esp_bt_dev_get_address();
+  for (int i = 3; i < 6; i++) {
+    presencePacket.IDDEV[i - 3] = (char)device_mac_address[i];
+  }
+  esp_bluedroid_disable();
+  esp_bluedroid_deinit();
 }
 
 //sender
 void loop() {
-  display.clearDisplay();
-  display.setTextColor(WHITE);
-  display.setTextSize(1);
-  display.setCursor(0, 0);
-  display.print("Sto inviando: " + String(counter));
-  display.display();
 
-  Serial.print("Sending packet: ");
-  Serial.println(counter);
-  
-  //Send LoRa packet to receiver
-  LoRa.beginPacket();
-  LoRa.print("hello ");
-  LoRa.print(counter);
-  LoRa.endPacket();
-  counter++;
-  delay(10000);
+  if(mode == HARBOR){
+    display.clearDisplay();
+    display.setTextColor(WHITE);
+    display.setTextSize(1);
+    display.setCursor(0, 0);
+    display.print("PORTO invio: " + String(counter));
+    display.display();
+
+    Serial.print("Sending packet: ");
+    Serial.println(counter);
+    
+    //Send LoRa packet to receiver
+    LoRa.beginPacket();
+    //LoRa.print("hello");
+    //LoRa.print(counter);
+    uint8_t * buff = (uint8_t *)(&presencePacket);
+    for(int i = 0; i < sizeof(NotifyPacket); i++){
+      LoRa.write(buff[i]);
+      Serial.println(buff[i]);
+    }
+    LoRa.endPacket();
+    counter++;    
   }
+  else if(mode == SEA){
+    display.clearDisplay();
+    display.setTextColor(WHITE);
+    display.setTextSize(1);
+    display.setCursor(0, 0);
+    display.print("SEA invio: " + String(counter));
+    display.display();
+
+    Serial.print("Sending packet: ");
+    Serial.println(counter);
+    
+    //Send LoRa packet to receiver
+    LoRa.beginPacket();
+    LoRa.print("hello");
+    //LoRa.write(test);
+    LoRa.print(counter);
+    LoRa.endPacket();
+    counter++;
+  }
+
+  delay(5000);
+}
