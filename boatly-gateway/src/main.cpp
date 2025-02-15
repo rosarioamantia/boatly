@@ -1,6 +1,8 @@
 #include <LoRa.h>
 #include <Arduino.h>
 #include <Adafruit_SSD1306.h>
+#include <WiFi.h>
+#include <WiFiClientSecure.h>
 #include <Wire.h> // libreria per I2C
 
 #define OLED_SDA 21 // data
@@ -17,8 +19,11 @@
 
 int counter = 0;
 bool withDisplay = false;
-
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET); //&Wire = riferimento ad I2C
+
+typedef struct  {
+  uint8_t IDDEV[3]; //float temp;
+} NotifyPacket;
 
 void initDisplay(){
   Serial.println("INIT DISPLAY");
@@ -66,27 +71,28 @@ void setup() {
   initDisplay();
 }
 
+NotifyPacket presencePacket;
+char buff[sizeof(NotifyPacket)];
+
 //receiver
 void loop() {
-  
+
   // try to parse packet
   int packetSize = LoRa.parsePacket();
   if (packetSize) {
-    Serial.println("TEST RICEVUTO ");
     // received a packet
-    Serial.print("Received packet '");
-    // read packet
-    while (LoRa.available()) {
+    if (LoRa.available()) {
+      LoRa.readBytes((uint8_t *)&presencePacket, sizeof(presencePacket));
+
+      Serial.println("Messaggio ricevuto");
+      Serial.printf("ID Sensore: %02x%02x%02x\n", presencePacket.IDDEV[0], presencePacket.IDDEV[1], presencePacket.IDDEV[2]);
+      //Serial.println(presencePacket.temp);
       
-      String LoRaData = LoRa.readString();
-      Serial.print(LoRaData);
+      sprintf(buff, "%02x %02x %02x", presencePacket.IDDEV[0], presencePacket.IDDEV[1], presencePacket.IDDEV[2]);
+      Serial.println(buff);
       
-      display.clearDisplay();
-      display.setTextColor(WHITE);
-      display.setTextSize(1);
-      display.setCursor(0, 0);
-      display.println("Testo ricevuto:" + LoRaData);
-      display.display();
+      //String LoRaData = LoRa.readString();
+      //Serial.print(LoRaData);      
     }
     // print RSSI of packet
     //Serial.print("' with RSSI ");
