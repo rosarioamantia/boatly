@@ -21,14 +21,23 @@
 #define rst 23
 #define dio0 26 // non si usa perchè bisogna settarlo solo per uso interno
 
+typedef struct  {
+  uint8_t IDDEV[3]; //float temp;
+} NotifyPacket;
+
+enum Mode {
+  SEA,
+  HARBOR
+};
+
 int counter = 0;
 bool withDisplay = false;
 //uint8_t test = 125;
-
+NotifyPacket presencePacket;
+enum Mode mode = HARBOR;
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET); //&Wire = riferimento ad I2C
 
-bool initBluetooth()
-{
+bool initBluetooth(){
   if (!btStart()) {
     Serial.println("Failed to initialize controller");
     return false;
@@ -69,19 +78,6 @@ void initDisplay(){
   }
 }
 
-enum Mode {
-  SEA,
-  HARBOR
-};
-
-typedef struct  {
-  int8_t IDDEV[3];
-} NotifyPacket;
-
-NotifyPacket presencePacket;
-
-enum Mode mode = HARBOR;
-
 void setup() {
   esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
   Serial.begin(115200);
@@ -115,6 +111,7 @@ void setup() {
   esp_bluedroid_deinit();
 }
 
+char testok[sizeof(NotifyPacket)];
 //sender
 void loop() {
 
@@ -136,8 +133,11 @@ void loop() {
     uint8_t * buff = (uint8_t *)(&presencePacket);
     for(int i = 0; i < sizeof(NotifyPacket); i++){
       LoRa.write(buff[i]);
+      Serial.println("INIZIO");
       Serial.println(buff[i]);
+      Serial.println("FINE");
     }
+    Serial.printf("ID Sensore: %02x%02x%02x\n", buff[0], buff[1], buff[2]);
     LoRa.endPacket();
     counter++;    
   }
