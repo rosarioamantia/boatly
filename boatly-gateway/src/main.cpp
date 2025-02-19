@@ -1,9 +1,12 @@
 #include <LoRa.h>
 #include <Arduino.h>
 #include <Adafruit_SSD1306.h>
+#include <Wire.h> // libreria per I2C
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
-#include <Wire.h> // libreria per I2C
+#include <SPI.h>
+#include <MQTTClient.h>
+
 
 #define OLED_SDA 21 // data
 #define OLED_SCL 22 // clock
@@ -17,9 +20,15 @@
 #define rst 23
 #define dio0 26 // non si usa perchè bisogna settarlo solo per uso interno
 
+const char* ssid = 
+const char* password = 
+
 int counter = 0;
 bool withDisplay = false;
+
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET); //&Wire = riferimento ad I2C
+WiFiClientSecure net;
+MQTTClient client;
 
 typedef struct  {
   uint8_t IDDEV[3]; //float temp;
@@ -48,6 +57,15 @@ void initDisplay(){
   }
 }
 
+void messageReceived(String &topic, String &payload) {
+  Serial.println("incoming: " + topic + " - " + payload);
+
+  // Note: Do not use the client in the callback to publish, subscribe or
+  // unsubscribe as it may cause deadlocks when other things arrive while
+  // sending and receiving acknowledgments. Instead, change a global variable,
+  // or push to a queue and handle it in the loop after calling `client.loop()`.
+}
+
 void setup() {
   Serial.begin(115200);
   Serial.println("LoRa Receiver");
@@ -69,6 +87,26 @@ void setup() {
   //LoRa.setSyncWord(0xF3);
   Serial.println("LoRa Initializing OK!");
   initDisplay();
+
+  // mqtt/wifi init
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, password);
+  if (WiFi.waitForConnectResult() != WL_CONNECTED) {
+        Serial.printf("WiFi Failed!\n");
+        return;
+  }
+
+  Serial.print("IP Address: ");
+  Serial.println(WiFi.localIP());
+  net.setInsecure();
+
+  client.begin("broker.hivemq.com", 8883, net);
+  client.onMessage(messageReceived);
+  while (!client.connect("broker.hivemq.com")) {
+    Serial.print(".");
+    delay(1000);
+  }
+  Serial.println("MQTT Connected");
 }
 
 NotifyPacket presencePacket;
@@ -76,6 +114,7 @@ char buff[sizeof(NotifyPacket)];
 
 //receiver
 void loop() {
+  client.loop();
 
   // try to parse packet
   int packetSize = LoRa.parsePacket();
@@ -85,11 +124,12 @@ void loop() {
       LoRa.readBytes((uint8_t *)&presencePacket, sizeof(presencePacket));
 
       Serial.println("Messaggio ricevuto");
-      Serial.printf("ID Sensore: %02x%02x%02x\n", presencePacket.IDDEV[0], presencePacket.IDDEV[1], presencePacket.IDDEV[2]);
+      Serial.printf("ID Sensore: %02x %02x %02x\n", presencePacket.IDDEV[0], presencePacket.IDDEV[1], presencePacket.IDDEV[2]);
       //Serial.println(presencePacket.temp);
       
-      sprintf(buff, "%02x %02x %02x", presencePacket.IDDEV[0], presencePacket.IDDEV[1], presencePacket.IDDEV[2]);
+      sprintf(buff, "%02x%02x%02x", presencePacket.IDDEV[0], presencePacket.IDDEV[1], presencePacket.IDDEV[2]);
       Serial.println(buff);
+      client.publish("boatly/presence",buff);
       
       //String LoRaData = LoRa.readString();
       //Serial.print(LoRaData);      
