@@ -20,8 +20,8 @@
 #define rst 23
 #define dio0 26 // non si usa perchè bisogna settarlo solo per uso interno
 
-const char* ssid = 
-const char* password = 
+const char* ssid = "Vodafone-A37173362";
+const char* password = "LF9477sPhctAYJJn";
 
 int counter = 0;
 bool withDisplay = false;
