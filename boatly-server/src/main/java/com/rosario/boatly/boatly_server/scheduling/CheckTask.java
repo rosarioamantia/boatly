@@ -39,6 +39,8 @@ public class CheckTask {
     }
 
     private void setAsStolen(Boat boat){
+        //TODO to not arrive here if there is already marked as stolen
+        //TODO to move inside boatService
         boat.setStolen(true);
         System.out.println("ok");
         boatService.updateBoat(boat);
