@@ -26,7 +26,7 @@ typedef struct  {
 } NotifyPacket;
 
 enum Mode {
-  SEA,
+  OPEN_SEA,
   HARBOR
 };
 
@@ -141,12 +141,12 @@ void loop() {
     LoRa.endPacket();
     counter++;    
   }
-  else if(mode == SEA){
+  else if(mode == OPEN_SEA){
     display.clearDisplay();
     display.setTextColor(WHITE);
     display.setTextSize(1);
     display.setCursor(0, 0);
-    display.print("SEA invio: " + String(counter));
+    display.print("OPEN_SEA invio: " + String(counter));
     display.display();
 
     Serial.print("Sending packet: ");

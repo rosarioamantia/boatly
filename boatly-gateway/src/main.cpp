@@ -129,7 +129,7 @@ void loop() {
       
       sprintf(buff, "%02x%02x%02x", presencePacket.IDDEV[0], presencePacket.IDDEV[1], presencePacket.IDDEV[2]);
       Serial.println(buff);
-      client.publish("boatly/presence",buff);
+      client.publish("boatly/presence",buff, false, 2);
       
       //String LoRaData = LoRa.readString();
       //Serial.print(LoRaData);      
