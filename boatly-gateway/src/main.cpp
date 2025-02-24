@@ -34,6 +34,10 @@ typedef struct  {
   uint8_t IDDEV[3]; //float temp;
 } NotifyPacket;
 
+typedef struct  {
+  uint8_t IDDEV[6];
+} SwitchModePacket;
+
 void initDisplay(){
   Serial.println("INIT DISPLAY");
 
@@ -102,41 +106,84 @@ void setup() {
 
   client.begin("broker.hivemq.com", 8883, net);
   client.onMessage(messageReceived);
-  while (!client.connect("broker.hivemq.com")) {
-    Serial.print(".");
-    delay(1000);
-  }
+  //while (!client.connect("broker.hivemq.com")) { //Scommenta quando riprendi ip
+   // Serial.print(".");
+   // delay(1000);
+  //}
   Serial.println("MQTT Connected");
 }
 
 NotifyPacket presencePacket;
 char buff[sizeof(NotifyPacket)];
 
+enum Mode {
+  TEST1,
+  TEST2
+};
+Mode mode = TEST2;
+
 //receiver
 void loop() {
   client.loop();
 
-  // try to parse packet
-  int packetSize = LoRa.parsePacket();
-  if (packetSize) {
-    // received a packet
-    if (LoRa.available()) {
-      LoRa.readBytes((uint8_t *)&presencePacket, sizeof(presencePacket));
+  if(mode == TEST1){
 
-      Serial.println("Messaggio ricevuto");
-      Serial.printf("ID Sensore: %02x %02x %02x\n", presencePacket.IDDEV[0], presencePacket.IDDEV[1], presencePacket.IDDEV[2]);
-      //Serial.println(presencePacket.temp);
-      
-      sprintf(buff, "%02x%02x%02x", presencePacket.IDDEV[0], presencePacket.IDDEV[1], presencePacket.IDDEV[2]);
-      Serial.println(buff);
-      client.publish("boatly/presence",buff, false, 2);
-      
-      //String LoRaData = LoRa.readString();
-      //Serial.print(LoRaData);      
+    // try to parse packet
+    int packetSize = LoRa.parsePacket();
+    
+    if (packetSize) {
+      // received a packet
+      if (LoRa.available()) {
+        LoRa.readBytes((uint8_t *)&presencePacket, sizeof(presencePacket));
+
+        Serial.println("Messaggio ricevuto");
+        Serial.printf("ID Sensore: %02x %02x %02x\n", presencePacket.IDDEV[0], presencePacket.IDDEV[1], presencePacket.IDDEV[2]);
+        //Serial.println(presencePacket.temp);
+        
+        sprintf(buff, "%02x%02x%02x", presencePacket.IDDEV[0], presencePacket.IDDEV[1], presencePacket.IDDEV[2]);
+        Serial.println(buff);
+        client.publish("boatly/presence",buff, false, 2);
+        
+        //String LoRaData = LoRa.readString();
+        //Serial.print(LoRaData);      
+      }
+      // print RSSI of packet
+      //Serial.print("' with RSSI ");
+      //Serial.println(LoRa.packetRssi());
     }
-    // print RSSI of packet
-    //Serial.print("' with RSSI ");
-    //Serial.println(LoRa.packetRssi());
+
+    counter++;
+
   }
-  counter++;
+  if(mode == TEST2){
+    SwitchModePacket switchModePacket;
+
+    const uint8_t* str = (uint8_t*)"8b288a";
+
+    for(int i = 3; i < 9; i++) {
+      switchModePacket.IDDEV[i - 3] = (char) str[i-3];
+      Serial.print(" OKOKOK");
+      Serial.print(switchModePacket.IDDEV[i - 3]);
+    }
+
+
+    ////// payload barche rubate 8b288a:2b466c-2b466c max 10 dispositivi
+
+    //////
+
+    //Send LoRa packet to receiver
+    LoRa.beginPacket();
+    //LoRa.print("hello");
+    //LoRa.print(counter);
+    uint8_t * switch_buff = (uint8_t *)(&switchModePacket);
+    for(int i = 0; i < sizeof(SwitchModePacket); i++){
+      LoRa.write(switch_buff[i]);
+      Serial.println("INIZIO");
+      Serial.println(switch_buff[i]);
+    }
+    Serial.printf("ID Sensore: %2x%2x%2x%2x%2x%2x\n", switch_buff[0], switch_buff[1], switch_buff[2], switch_buff[3], switch_buff[4], switch_buff[5]);
+    LoRa.endPacket();
+
+    delay(5000);
+  }
 }
