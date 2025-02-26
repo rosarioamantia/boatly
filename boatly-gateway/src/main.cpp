@@ -35,7 +35,8 @@ typedef struct  {
 } NotifyPacket;
 
 typedef struct  {
-  uint8_t IDDEV[6];
+  uint8_t IDDEV[3];
+
 } SwitchModePacket;
 
 void initDisplay(){
@@ -118,7 +119,8 @@ char buff[sizeof(NotifyPacket)];
 
 enum Mode {
   TEST1,
-  TEST2
+  TEST2,
+  TEST3
 };
 Mode mode = TEST2;
 
@@ -156,34 +158,29 @@ void loop() {
 
   }
   if(mode == TEST2){
-    SwitchModePacket switchModePacket;
+    String message = "8b288a:2_3b466a-2b466c$";  // Stringa di esempio -> numero_rubate:id_barca:id
+    Serial.print("Invio: ");
+    Serial.println(message);
 
-    const uint8_t* str = (uint8_t*)"8b288a";
+    LoRa.beginPacket();        // Inizia il pacchetto
+    LoRa.print(message);       // Invia la stringa
+    LoRa.endPacket();          // Chiude il pacchetto e invia
 
-    for(int i = 3; i < 9; i++) {
-      switchModePacket.IDDEV[i - 3] = (char) str[i-3];
-      Serial.print(" OKOKOK");
-      Serial.print(switchModePacket.IDDEV[i - 3]);
-    }
+    delay(2000);  // Aspetta prima di inviare di nuovo
+    mode = TEST3;
 
 
-    ////// payload barche rubate 8b288a:2b466c-2b466c max 10 dispositivi
+  }
+  if(mode == TEST3){
+    String message = "8b288:2_3b466a-2b466c$";  // Stringa di esempio -> numero_rubate:id_barca:id
+    Serial.print("Invio: ");
+    Serial.println(message);
 
-    //////
+    LoRa.beginPacket();        // Inizia il pacchetto
+    LoRa.print(message);       // Invia la stringa
+    LoRa.endPacket();          // Chiude il pacchetto e invia
 
-    //Send LoRa packet to receiver
-    LoRa.beginPacket();
-    //LoRa.print("hello");
-    //LoRa.print(counter);
-    uint8_t * switch_buff = (uint8_t *)(&switchModePacket);
-    for(int i = 0; i < sizeof(SwitchModePacket); i++){
-      LoRa.write(switch_buff[i]);
-      Serial.println("INIZIO");
-      Serial.println(switch_buff[i]);
-    }
-    Serial.printf("ID Sensore: %2x%2x%2x%2x%2x%2x\n", switch_buff[0], switch_buff[1], switch_buff[2], switch_buff[3], switch_buff[4], switch_buff[5]);
-    LoRa.endPacket();
-
-    delay(5000);
+    delay(2000);  // Aspetta prima di inviare di nuovo
+    mode = TEST2;    
   }
 }
