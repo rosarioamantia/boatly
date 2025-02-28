@@ -158,6 +158,21 @@ void loop() {
 
   }
   if(mode == TEST2){
+    //String message = "3b466a:2_3b466a-2b466c$";  // Stringa di esempio -> numero_rubate:id_barca:id
+    String message = "3b466a:";
+    Serial.print("Invio: ");
+    Serial.println(message);
+
+    LoRa.beginPacket();        // Inizia il pacchetto
+    LoRa.print(message);       // Invia la stringa
+    LoRa.endPacket();          // Chiude il pacchetto e invia
+
+    delay(3000);  // Aspetta prima di inviare di nuovo
+    mode = TEST3;
+
+
+  }
+  if(mode == TEST3){
     String message = "8b288a:2_3b466a-2b466c$";  // Stringa di esempio -> numero_rubate:id_barca:id
     Serial.print("Invio: ");
     Serial.println(message);
@@ -166,21 +181,7 @@ void loop() {
     LoRa.print(message);       // Invia la stringa
     LoRa.endPacket();          // Chiude il pacchetto e invia
 
-    delay(2000);  // Aspetta prima di inviare di nuovo
-    mode = TEST3;
-
-
-  }
-  if(mode == TEST3){
-    String message = "8b288:2_3b466a-2b466c$";  // Stringa di esempio -> numero_rubate:id_barca:id
-    Serial.print("Invio: ");
-    Serial.println(message);
-
-    LoRa.beginPacket();        // Inizia il pacchetto
-    LoRa.print(message);       // Invia la stringa
-    LoRa.endPacket();          // Chiude il pacchetto e invia
-
-    delay(2000);  // Aspetta prima di inviare di nuovo
+    delay(3000);  // Aspetta prima di inviare di nuovo
     mode = TEST2;    
   }
 }

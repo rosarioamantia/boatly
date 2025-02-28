@@ -43,6 +43,8 @@ enum Mode
 };
 
 String* stolen_ids;
+String stolen_found_ids;
+bool found_stolen = false;
 int counter = 0;
 int insert_stolen = 0;
 int stolen_boats_qty = 0;
@@ -50,6 +52,7 @@ bool withDisplay = false;
 NotifyPacket presencePacket;
 enum Mode mode = OPEN_SEA;
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET); //&Wire = riferimento ad I2C
+String device_id;
 
 bool initBluetooth()
 {
@@ -70,6 +73,7 @@ bool initBluetooth()
     Serial.println("Failed to enable bluedroid");
     return false;
   }
+  return true;
 }
 
 void initDisplay()
@@ -90,7 +94,6 @@ void initDisplay()
     display.setTextColor(WHITE);
     display.setTextSize(2);
     display.setCursor(0, 0);
-    // display.drawBitmap(SCREEN_WIDTH, SCREEN_HEIGHT, logo16_glcd_bmp, 16, 16, 1);
     display.print("TEST OLED OK");
     display.display();
   }
@@ -99,13 +102,8 @@ void initDisplay()
 char buffe[sizeof(uint8_t[3])];
 
 void onReceive(int packetSize){
-  if (packetSize == 0) return; // Nessun pacchetto ricevuto
-
-  String device_id;
-  
+  if (packetSize == 0) return; // Nessun pacchetto ricevuto  
   String receivedMessage = "";
-
-  
   sprintf(buffe, "%02x%02x%02x", presencePacket.IDDEV[0], presencePacket.IDDEV[1], presencePacket.IDDEV[2]);
   
   Serial.println("Entrato onReceive");
@@ -115,7 +113,10 @@ void onReceive(int packetSize){
 
       if(actual_char == ':'){
         if(strcmp(receivedMessage.c_str(), buffe) == 0){
+          //sprintf(device_id, "%02x%02x%02x", presencePacket.IDDEV[0], presencePacket.IDDEV[1], presencePacket.IDDEV[2]);
           device_id = receivedMessage.c_str();
+          Serial.print("SETTATO DEV ID: ");
+          Serial.print(buffe);
 
           //salva i dati in modo opportuno e passa in modalità OPEN_SEA
           Serial.print("RICEVUTO MESS IN MODE HARBOR - E' MESSAGGIO PER ME - PASSO IN OPEN");
@@ -131,9 +132,12 @@ void onReceive(int packetSize){
         if(stolen_boats_qty == 0){
           break; //nessuna barca rubata
         }
-        //Serial.print("quantità barche rubate: ");
-        //Serial.println(stolen_boats_qty);
 
+        if (stolen_ids) {
+          delete[] stolen_ids;
+          stolen_ids = nullptr;
+        }
+        
         stolen_ids = new String[stolen_boats_qty];
         receivedMessage = "";
         insert_stolen = 0;
@@ -170,22 +174,21 @@ void onReceive(int packetSize){
           receivedMessage = "";
     
         }else{
-          Serial.print("RICEVUTO MESS IN MODE OPEN - NON PER ME - CONTROLLO SE RUBATO \n"); //eventualmente gestisco un allarme
+          Serial.print("RICEVUTO MESS IN MODE OPEN - NON PER ME - CONTROLLO SE E' UNA RUBATA");
 
           if(stolen_boats_qty != 0){
+            Serial.print(" STOLEN QTY:");
+            Serial.print(stolen_boats_qty);
             for(int i = 0; i < stolen_boats_qty; i++){
               if(stolen_ids[i] == receivedMessage){
-                Serial.print(" INDIVIDUATA BARCA RUBATA - AVVISA TUTT QUANT INVIANDO ");
-
-                Serial.print(receivedMessage);
-              }else{
-                Serial.print(" CHECK RUBATE NULL ");
+                found_stolen = true;
+                stolen_found_ids += receivedMessage + '?';
               }
             }
           }
 
         }        
-      }else if(actual_char == '/'){
+      }else if(actual_char == '!'){
         // manda messaggio di alert con la receivedMessage
       }
       else{
@@ -269,8 +272,38 @@ void loop() {
       Serial.println("OPEN_SEA azione periodica..."); 
       previousMillis = currentMillis;
 
+      //Send LoRa packet to receiver
+      /*
+      LoRa.beginPacket();
       
+      String message = device_id + ":";  // Stringa di esempio -> numero_rubate:id_barca:id
+      Serial.print("Invio: ");
+      Serial.println(message);
 
+      LoRa.beginPacket();        // Inizia il pacchetto
+      LoRa.print(message);       // Invia la stringa
+      LoRa.endPacket();          // Chiude il pacchetto e invia
+
+      LoRa.receive();
+      */
+
+      if(!found_stolen){
+        Serial.print("FOUND STOLEN:");
+        Serial.print(found_stolen);
+      }else{
+        LoRa.beginPacket();
+        
+        Serial.print("Invio barche rubate: ");
+        Serial.println(device_id + stolen_found_ids + '!');
+
+        LoRa.beginPacket();        // Inizia il pacchetto
+        LoRa.print(stolen_found_ids);       // Invia la stringa
+        LoRa.endPacket();          // Chiude il pacchetto e invia
+
+        LoRa.receive();
+        found_stolen = false;
+        stolen_found_ids = "";
+      }
     }
   }
 }
