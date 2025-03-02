@@ -1,13 +1,9 @@
 #include <LoRa.h>
 #include <Arduino.h>
-#include <Adafruit_SSD1306.h>
 #include <Wire.h> // libreria per I2C
 
 #include "esp_bt_main.h"
 #include "esp_bt_device.h"
-
-#define uS_TO_S_FACTOR 1000000 /* Conversion factor for micro seconds to seconds */
-#define TIME_TO_SLEEP 5        /* Time ESP32 will go to sleep (in seconds) */
 
 #define OLED_SDA 21 // data
 #define OLED_SCL 22 // clock
@@ -21,116 +17,73 @@
 #define rst 23
 #define dio0 26 // non si usa perchè bisogna settarlo solo per uso interno
 
+float temp = 10;
+char device_id[8];
+char stolen_id[8];
 unsigned long previousMillis = 0;
-const long interval = 5000; // Tempo di attesa in millisecondi
-
-const uint8_t *device_mac_address;
-
-typedef struct
-{
-  uint8_t IDDEV[3]; // float temp;
-} NotifyPacket;
-
-typedef struct
-{
-  uint8_t IDDEV[6];
-} SwitchModePacket;
+int stolen_boats_qty = 0;
+String* stolen_ids = nullptr;
+int insert_stolen = 0;
+boolean stolen_found = false;
 
 enum Mode
 {
   OPEN_SEA,
   HARBOR
 };
-
-String* stolen_ids;
-String stolen_found_ids;
-bool found_stolen = false;
-int counter = 0;
-int insert_stolen = 0;
-int stolen_boats_qty = 0;
-bool withDisplay = false;
-NotifyPacket presencePacket;
-enum Mode mode = OPEN_SEA;
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET); //&Wire = riferimento ad I2C
-String device_id;
+Mode mode;
 
 bool initBluetooth()
 {
-  if (!btStart())
-  {
+  if (!btStart()) {
     Serial.println("Failed to initialize controller");
     return false;
   }
-
-  if (esp_bluedroid_init() != ESP_OK)
-  {
+ 
+  if (esp_bluedroid_init() != ESP_OK) {
     Serial.println("Failed to initialize bluedroid");
     return false;
   }
-
-  if (esp_bluedroid_enable() != ESP_OK)
-  {
+ 
+  if (esp_bluedroid_enable() != ESP_OK) {
     Serial.println("Failed to enable bluedroid");
     return false;
   }
-  return true;
+
+  return true; 
 }
-
-void initDisplay()
-{
-  Serial.println("INIT DISPLAY");
-
-  // inizializzazione display OLED
-  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) // SSD1306_SWITCHCAPVCC = modalità di alimentazione del display OLED
-  {                                               // 0x3C = indirizzo I2C del display SSD1306, specifico per dispositivo (es. display OLED 0x3C)
-    Serial.print(F("SSD130 allocation failed"));
-  }
-  else
-  {
-    Serial.print("display ok");
-    withDisplay = true;
-    display.clearDisplay();
-    display.display();
-    display.setTextColor(WHITE);
-    display.setTextSize(2);
-    display.setCursor(0, 0);
-    display.print("TEST OLED OK");
-    display.display();
-  }
-}
-
-char buffe[sizeof(uint8_t[3])];
 
 void onReceive(int packetSize){
-  if (packetSize == 0) return; // Nessun pacchetto ricevuto  
+  if (packetSize == 0) return;
   String receivedMessage = "";
-  sprintf(buffe, "%02x%02x%02x", presencePacket.IDDEV[0], presencePacket.IDDEV[1], presencePacket.IDDEV[2]);
+
   
-  Serial.println("Entrato onReceive");
   if(mode == HARBOR){
-    while (LoRa.available()) {
+    //Serial.print("RICEVUTO MESSAGGIO IN MODE HARBOR");
+
+    while(LoRa.available()){
       char actual_char = (char)LoRa.read();
-
+ 
       if(actual_char == ':'){
-        if(strcmp(receivedMessage.c_str(), buffe) == 0){
-          //sprintf(device_id, "%02x%02x%02x", presencePacket.IDDEV[0], presencePacket.IDDEV[1], presencePacket.IDDEV[2]);
-          device_id = receivedMessage.c_str();
-          Serial.print("SETTATO DEV ID: ");
-          Serial.print(buffe);
-
-          //salva i dati in modo opportuno e passa in modalità OPEN_SEA
-          Serial.print("RICEVUTO MESS IN MODE HARBOR - E' MESSAGGIO PER ME - PASSO IN OPEN");
+        Serial.println("HARBOR entrato");
+        if(strcmp(receivedMessage.c_str(), device_id) == 0){//   receivedMessage == device_id){
+          //Sono in HARBOR e mi è arrivata l'autorizzazione di uscire, setto variabile e passo in OPEN_SEA
+          Serial.println(" HARBOR  arrivata l'autorizzazione di uscire, setto variabile e passo in OPEN_SEA");
+          mode = OPEN_SEA;
           receivedMessage = "";
-
         }else{
-          Serial.print("RICEVUTO MESS IN MODE HARBOR - NON E' MESSAGGIO PER ME, ESCI");
+          //Sono in HARBOR e mi è arrivato un id diverso dal mio, non faccio niente
+          Serial.println(" HARBOR nessuna azione");
           break;
         }
       }else if(actual_char == '_'){
-        stolen_boats_qty = (int) receivedMessage.toInt();
+        stolen_boats_qty = receivedMessage.toInt();
+        Serial.print("STOLEN BOATS QTY:");
+        Serial.println(stolen_boats_qty);
         
         if(stolen_boats_qty == 0){
-          break; //nessuna barca rubata
+          Serial.println(" HARBOR nessuna barca rubata");
+          break; //nessuna barca rubata // in teoria non ci si entrerà mai, controllo di sicurezza
         }
 
         if (stolen_ids) {
@@ -141,7 +94,6 @@ void onReceive(int packetSize){
         stolen_ids = new String[stolen_boats_qty];
         receivedMessage = "";
         insert_stolen = 0;
-        
       }else if(actual_char == '-'){
         stolen_ids[insert_stolen] = receivedMessage;
         
@@ -151,159 +103,121 @@ void onReceive(int packetSize){
         stolen_ids[insert_stolen] = receivedMessage;
         
         receivedMessage = "";
-
-        mode = OPEN_SEA;
       }
       else{
-        receivedMessage += actual_char;  // Costruisce la stringa ricevuta
+        receivedMessage += actual_char;
       }
     }
+    
   }else if(mode == OPEN_SEA){
-    while (LoRa.available()) {
-      char actual_char = (char)LoRa.read();
+    Serial.println("RICEVUTO MESSAGGIO IN MODE IN OPEN_SEA");
 
+    while(LoRa.available()){
+      char actual_char = (char)LoRa.read();
+ 
       if(actual_char == ':'){
-        if(strcmp(receivedMessage.c_str(), buffe) == 0){
-          
-          Serial.print("RICEVUTO MESS IN MODE OPEN - E' MESSAGGIO PER ME - PASSO IN HARBOR");
+        Serial.println("OPEN: entrato");
+        if(strcmp(receivedMessage.c_str(), device_id) == 0){//   receivedMessage == device_id)
+          //Sono in OPEN e mi è arrivata l'autorizzazione di rientrare, setto variabile e passo in HARBOR
+          Serial.println("OPEN ricevuto rientro, passo in mod HARBOR ");
           mode = HARBOR;
 
           delete[] stolen_ids;
           stolen_ids = nullptr;
     
           receivedMessage = "";
-    
         }else{
-          Serial.print("RICEVUTO MESS IN MODE OPEN - NON PER ME - CONTROLLO SE E' UNA RUBATA");
-
+          //Sono in OPEN e mi è arrivato un id diverso dal mio, parte controllo per barche rubate
           if(stolen_boats_qty != 0){
             Serial.print(" STOLEN QTY:");
             Serial.print(stolen_boats_qty);
             for(int i = 0; i < stolen_boats_qty; i++){
               if(stolen_ids[i] == receivedMessage){
-                found_stolen = true;
-                stolen_found_ids += receivedMessage + '?';
+                stolen_found = true;
+                strcpy(stolen_id, receivedMessage.c_str());
+                Serial.print("ok trovato: ");
+                Serial.print(stolen_id);
               }
             }
           }
-
-        }        
-      }else if(actual_char == '!'){
-        // manda messaggio di alert con la receivedMessage
-      }
-      else{
-        receivedMessage += actual_char;  // Costruisce la stringa ricevuta
+        }
+        receivedMessage = "";
+      }else if(actual_char == '$'){
+        Serial.print("OKOK  ");
+        if(!stolen_found){
+          Serial.print(" SI:");
+          Serial.print(device_id);
+          strcpy(stolen_id, receivedMessage.c_str());
+          Serial.print(" SI:");
+          Serial.print(device_id);
+          stolen_found = true;
+        }
+      }else{
+        receivedMessage += actual_char;
       }
     }
   }
 }
 
-void setup()
-{
-  // esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
+void setup() {
   Serial.begin(115200);
-  
-  LoRa.setPins(cs, rst, dio0);
+  LoRa.setPins(LORA_CS, LORA_RST, dio0);
+  mode = HARBOR;
 
-  // replace the LoRa.begin(---E-) argument with your location's frequency
-  // 433E6 for Asia
-  // 866E6 for Europe
-  // 915E6 for North America
-  while (!LoRa.begin(866E6))
-  {
-    Serial.println(".");
-    delay(500);
+  while (!LoRa.begin(866E6)) {
+      Serial.print(".");
+      delay(500);
   }
+  Serial.println();
 
-  // Change sync word (0xF3) to match the receiver (optional)
-  // The sync word assures you don't get LoRa messages from other LoRa transceivers
-  // ranges from 0-0xFF
-  // LoRa.setSyncWord(0xF3);
+  //LoRa.setSyncWord(0xcc);
   Serial.println("LoRa Initializing OK!");
-  initDisplay();
-  initBluetooth();
 
-  // ottenere l'indirizzo MAC univoco del modulo Bluetooth integrato nel dispositivo
-  device_mac_address = esp_bt_dev_get_address();
-  for (int i = 3; i < 6; i++)
-  {
-    presencePacket.IDDEV[i - 3] = (char)device_mac_address[i];
+  initBluetooth();
+  const uint8_t* bluetooth_addr = esp_bt_dev_get_address();
+  uint8_t TEST_IDDEV[3];
+
+  /*
+  for (int i = 0; i < 3; i++) {
+    TEST_IDDEV[i] = (char) bluetooth_addr[i];
   }
+  */
+
+  sprintf(device_id, "%02x%02x%02x", (char) bluetooth_addr[0], (char) bluetooth_addr[1], (char) bluetooth_addr[2]);  
+
+  Serial.print("device_id: ");
+  Serial.println(device_id);
+  
   esp_bluedroid_disable();
   esp_bluedroid_deinit();
 
-  // Imposta la callback per ricezione pacchetti
   LoRa.onReceive(onReceive);
-  LoRa.receive(); // Modalità ricezione continua
+  LoRa.receive();
 }
 
-// sender
 void loop() {
   unsigned long currentMillis = millis();
 
-  if(mode == HARBOR){
-    // Invia presence packet ogni tot secondi
-    if (currentMillis - previousMillis >= interval) {
-      Serial.print("HARBOR azione periodica...");
-      previousMillis = currentMillis;
-
-      Serial.print("Sending packet: ");
-      Serial.println(counter);
-      
-      //Send LoRa packet to receiver
-      LoRa.beginPacket();
-      
-      uint8_t * buff = (uint8_t *)(&presencePacket);
-      for(int i = 0; i < sizeof(NotifyPacket); i++){
-        LoRa.write(buff[i]);
-        Serial.println("CICLO X");
-        Serial.println(buff[i]);
-      }
-      Serial.printf("ID Sensore: %02x%02x%02x\n", buff[0], buff[1], buff[2]);
-      LoRa.endPacket();
-      LoRa.receive();
-      counter++;
+  if (currentMillis - previousMillis >= 5000) {
+    if(mode == OPEN_SEA){
+      Serial.print("\nMODE: OPEN SEA");
+    }else{
+      Serial.print("\nMODE: HARBOR");        
     }
-  }
+    
+    Serial.print("\nESEGUO azione periodica...");
+    previousMillis = currentMillis;
 
-  if(mode == OPEN_SEA){
-    // Esegui un'azione ogni tot secondi
-    if (currentMillis - previousMillis >= interval) {
-      Serial.println("OPEN_SEA azione periodica..."); 
-      previousMillis = currentMillis;
 
-      //Send LoRa packet to receiver
-      /*
-      LoRa.beginPacket();
-      
-      String message = device_id + ":";  // Stringa di esempio -> numero_rubate:id_barca:id
-      Serial.print("Invio: ");
-      Serial.println(message);
-
-      LoRa.beginPacket();        // Inizia il pacchetto
-      LoRa.print(message);       // Invia la stringa
-      LoRa.endPacket();          // Chiude il pacchetto e invia
-
-      LoRa.receive();
-      */
-
-      if(!found_stolen){
-        Serial.print("FOUND STOLEN:");
-        Serial.print(found_stolen);
-      }else{
-        LoRa.beginPacket();
-        
-        Serial.print("Invio barche rubate: ");
-        Serial.println(device_id + stolen_found_ids + '!');
-
-        LoRa.beginPacket();        // Inizia il pacchetto
-        LoRa.print(stolen_found_ids);       // Invia la stringa
-        LoRa.endPacket();          // Chiude il pacchetto e invia
-
-        LoRa.receive();
-        found_stolen = false;
-        stolen_found_ids = "";
-      }
+    if(stolen_found){
+      String payload = "";
+      payload = payload + device_id + ':' + stolen_id + '$' ;// + stolen_origin +  stolen_id;
+      Serial.print(payload);
+      stolen_found = false;
+      stolen_id[0] = '\0';
     }
+
+    //payload = payload + device_id + ':' + mode + ':' + open_authorized + ':' + stolen_id + '\n';
+    
   }
 }
