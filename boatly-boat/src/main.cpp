@@ -126,6 +126,7 @@ void onReceive(int packetSize){
           stolen_ids = nullptr;
     
           receivedMessage = "";
+          break;
         }else{
           //Sono in OPEN e mi è arrivato un id diverso dal mio, parte controllo per barche rubate
           if(stolen_boats_qty != 0){
@@ -133,10 +134,10 @@ void onReceive(int packetSize){
             Serial.print(stolen_boats_qty);
             for(int i = 0; i < stolen_boats_qty; i++){
               if(stolen_ids[i] == receivedMessage){
-                stolen_found = true;
                 strcpy(stolen_id, receivedMessage.c_str());
                 Serial.print("ok trovato: ");
                 Serial.print(stolen_id);
+                stolen_found = true;
               }
             }
           }
@@ -199,25 +200,32 @@ void loop() {
   unsigned long currentMillis = millis();
 
   if (currentMillis - previousMillis >= 5000) {
-    if(mode == OPEN_SEA){
-      Serial.print("\nMODE: OPEN SEA");
-    }else{
-      Serial.print("\nMODE: HARBOR");        
-    }
-    
     Serial.print("\nESEGUO azione periodica...");
+
+    String payload = "";
+    payload = payload + device_id + ':';// + stolen_origin +  stolen_id;
+
+    Serial.print(payload);
+    LoRa.beginPacket();        // Inizia il pacchetto
+    LoRa.print(payload);       // Invia la stringa
+    LoRa.endPacket();
+    LoRa.receive();
+
     previousMillis = currentMillis;
-
-
-    if(stolen_found){
-      String payload = "";
-      payload = payload + device_id + ':' + stolen_id + '$' ;// + stolen_origin +  stolen_id;
-      Serial.print(payload);
-      stolen_found = false;
-      stolen_id[0] = '\0';
-    }
-
-    //payload = payload + device_id + ':' + mode + ':' + open_authorized + ':' + stolen_id + '\n';
     
+  }
+
+  if(stolen_found){
+    String payload = "";
+    payload = payload + device_id + ':' + stolen_id + '$' ;// + stolen_origin +  stolen_id;
+
+    Serial.print("\n OKOKOK INVIO: ");
+    Serial.print(payload);
+    LoRa.beginPacket();        // Inizia il pacchetto
+    LoRa.print(payload);       // Invia la stringa
+    LoRa.endPacket();
+    LoRa.receive();
+    stolen_found = false;
+    stolen_id[0] = '\0';
   }
 }

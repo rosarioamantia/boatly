@@ -28,16 +28,19 @@ public class InboundMQTTConfig {
         return new DirectChannel();
     }
 
+    /*
     @Bean
     public MessageChannel mqttInputChannel2() {
         return new DirectChannel();
     }
 
+     */
+
     @Bean
     public MessageProducer inbound() {
         MqttPahoMessageDrivenChannelAdapter adapter =
-                new MqttPahoMessageDrivenChannelAdapter("tcp://broker.hivemq.com:1883", "testClient",
-                        "boatly/presence");
+                new MqttPahoMessageDrivenChannelAdapter("tcp://broker.emqx.io:1883", "testClient",
+                        "test/receiver");
         adapter.setCompletionTimeout(15000);
         adapter.setConverter(new DefaultPahoMessageConverter());
         adapter.setQos(2);
@@ -45,6 +48,7 @@ public class InboundMQTTConfig {
         return adapter;
     }
 
+    /*
     @Bean
     public MessageProducer inbound2() {
         MqttPahoMessageDrivenChannelAdapter adapter =
@@ -57,18 +61,21 @@ public class InboundMQTTConfig {
         return adapter;
     }
 
+     */
+
     @Bean
     @ServiceActivator(inputChannel = "mqttInputChannel")
     public MessageHandler handler() {
         return new MessageHandler() {
             @Override
             public void handleMessage(Message<?> message) throws MessagingException {
-                System.out.println(message.getPayload());
-                mqttService.updatePresence(message.getPayload().toString());
+                System.out.println("OKOK " + message.getPayload());
+                mqttService.parseMessage(message.getPayload().toString());
             }
         };
     }
 
+    /*
     @Bean
     @ServiceActivator(inputChannel = "mqttInputChannel2")
     public MessageHandler handler2() {
@@ -81,4 +88,6 @@ public class InboundMQTTConfig {
 
         };
     }
+
+     */
 }

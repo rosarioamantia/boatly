@@ -14,6 +14,8 @@ const char* mqtt_server = "broker.emqx.io";
 uint16_t mqtt_port = 8883;
 WiFiClientSecure client;
 PubSubClient mqttClient(client);
+String outbound_mqtt_message = "";
+boolean outbound_mqtt = false;
 
 boolean runEvery(unsigned long interval){
     static unsigned long previousMillis = 0;
@@ -41,7 +43,27 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
     LoRa.print(received);       // Invia la stringa
     LoRa.endPacket();
     Serial.println("-----------------------");
+    LoRa.receive();
 
+}
+
+void onReceive(int packetSize){
+  if (packetSize == 0) return;
+  
+
+  while(LoRa.available()){
+    char actual_char = (char) LoRa.read();
+
+    //Serial.print("\nmessaggio lora ricevuto, da scrivere nel topic mqtt\n");
+
+    outbound_mqtt_message += actual_char;
+    
+  }
+  
+  Serial.print("ricevuto da barca: ");
+  Serial.println(outbound_mqtt_message);
+  outbound_mqtt = true;
+  LoRa.receive();
 }
 
 void setup(){
@@ -50,38 +72,49 @@ void setup(){
   while (!LoRa.begin(866E6)) {
     Serial.print(".");
     delay(500);
-}
+  }
   Serial.println("setup()");
 
-    WiFi.begin(ssid, password);
+  WiFi.begin(ssid, password);
 
-    while (WiFi.status() != WL_CONNECTED){
-      Serial.println("Internet Connecting");
-        delay(500);
-    }
+  while (WiFi.status() != WL_CONNECTED){
+    Serial.println("Internet Connecting");
+      delay(500);
+  }
 
-    client.setInsecure();
-    mqttClient.setServer(mqtt_server, mqtt_port);
-    mqttClient.setCallback(mqttCallback);
-    Serial.println("Internet Connected");
+  client.setInsecure();
+  mqttClient.setServer(mqtt_server, mqtt_port);
+  mqttClient.setCallback(mqttCallback);
+  Serial.println("Internet Connected");
 
-    while (!mqttClient.connected()) {
-        String client_id = "iotBoard-client-";
-        client_id += String(WiFi.macAddress());
-        
-        if (mqttClient.connect(client_id.c_str())) {
-          Serial.println("MQTT Connected");
-        } else {
-          Serial.println("MQTT error");
-            delay(2000);
-        }
-    }
-    mqttClient.subscribe("test/rosario");
+  while (!mqttClient.connected()) {
+      String client_id = "iotBoard-client-";
+      client_id += String(WiFi.macAddress());
+      
+      if (mqttClient.connect(client_id.c_str())) {
+        Serial.println("MQTT Connected");
+      } else {
+        Serial.println("MQTT error");
+          delay(2000);
+      }
+  }
+
+  mqttClient.subscribe("test/rosario");
+  LoRa.onReceive(onReceive);
+  LoRa.receive();
 }
 
 void loop(){
+
+  if(outbound_mqtt == true){
+    Serial.print("\nOKOK\n");
+    mqttClient.publish("test/receiver", outbound_mqtt_message.c_str());
+    outbound_mqtt_message.clear();
+    outbound_mqtt = false;
+  }
+
   if(runEvery(2000)){
-      //mqttClient.publish("test/rosario", "64b708:0");
+      
   }
   mqttClient.loop();
 }

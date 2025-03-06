@@ -15,14 +15,17 @@ public class Boat {
     private String name;
     private boolean stolen;
     private LocalDateTime lastUpdate;
+    private boolean inHarbor;
+
     public Boat() {
     }
 
-    public Boat(String id, String name, boolean stolen, LocalDateTime lastUpdate) {
+    public Boat(String id, String name, boolean stolen, LocalDateTime lastUpdate, boolean inHarbor) {
         this.id = id;
         this.name = name;
         this.stolen = stolen;
         this.lastUpdate = lastUpdate;
+        this.inHarbor = inHarbor;
     }
 
     // Getter e Setter
@@ -56,6 +59,14 @@ public class Boat {
 
     public void setLastUpdate(LocalDateTime lastUpdate) {
         this.lastUpdate = lastUpdate;
+    }
+
+    public boolean isInHarbor() {
+        return inHarbor;
+    }
+
+    public void setInHarbor(boolean inHarbor) {
+        this.inHarbor = inHarbor;
     }
 
     // toString per debug e logging

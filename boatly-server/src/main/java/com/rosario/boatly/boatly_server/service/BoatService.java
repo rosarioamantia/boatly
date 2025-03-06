@@ -22,9 +22,16 @@ public class BoatService {
         return boatRepository.save(boat);
     }
 
+    //if a boat didn't respond for x minutes
     public boolean isLastUpdateOutOfTime(LocalDateTime lastUpdate){
         LocalDateTime actualTime = LocalDateTime.now();
 
-        return lastUpdate.isAfter(actualTime.minusMinutes(10L)) ? false : true;
+        return lastUpdate.isAfter(actualTime.minusMinutes(5L)) ? false : true;
+    }
+
+    public void setAsStolen(Boat boat){
+        boat.setStolen(true);
+        updateBoat(boat);
+        System.out.println("boat with id " + boat.getId() + " set as stolen");
     }
 }

@@ -26,23 +26,17 @@ public class CheckTask {
     TripService tripService;
 
     @Scheduled(fixedRate = 20000)  // 300000 ms = 5 minutes
-    public void checkForStolenBoats() {
+    public void identifyStolenBoats() {
         System.out.println("Routine eseguita!");
         System.out.println(LocalDateTime.now());
 
 
         boatService.getAllBoats()
                 .stream()
-                .filter(boat -> boatService.isLastUpdateOutOfTime(boat.getLastUpdate()) && !tripService.existRegisteredTrip(boat.getId()))
+                .filter(boat -> boatService.isLastUpdateOutOfTime(boat.getLastUpdate()) &&
+                        boat.isInHarbor() &&
+                        !boat.isStolen())
                 .forEach(
-                        boat -> setAsStolen(boat));
-    }
-
-    private void setAsStolen(Boat boat){
-        //TODO to not arrive here if there is already marked as stolen
-        //TODO to move inside boatService
-        boat.setStolen(true);
-        System.out.println("ok");
-        boatService.updateBoat(boat);
+                        boat -> boatService.setAsStolen(boat));
     }
 }
