@@ -7,8 +7,8 @@
 #define rst 23
 #define dio0 26
 
-const char* ssid = "Vodafone-A37173362";
-const char* password = "LF9477sPhctAYJJn";
+const char* ssid = "Pixel_9854";
+const char* password = "ciaociao1";
 
 const char* mqtt_server = "broker.emqx.io";
 uint16_t mqtt_port = 8883;
