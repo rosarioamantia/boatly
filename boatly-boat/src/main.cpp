@@ -4,6 +4,7 @@
 
 #include "esp_bt_main.h"
 #include "esp_bt_device.h"
+#include <map>
 
 #define OLED_SDA 21 // data
 #define OLED_SCL 22 // clock
@@ -18,13 +19,21 @@
 #define dio0 26 // non si usa perchè bisogna settarlo solo per uso interno
 
 float temp = 10;
+
 char device_id[8];
 char stolen_id[8];
+
 unsigned long previousMillis = 0;
+
 int stolen_boats_qty = 0;
-String* stolen_ids = nullptr;
 int insert_stolen = 0;
+
+String* stolen_ids = nullptr;
 boolean stolen_found = false;
+
+std::map<String, int> retransmission_check;
+
+const int MAX_RETRANSMISSIONS_QTY = 4;
 
 enum Mode
 {
@@ -65,14 +74,12 @@ void onReceive(int packetSize){
       char actual_char = (char)LoRa.read();
  
       if(actual_char == ':'){
-        Serial.println("HARBOR entrato");
-        if(strcmp(receivedMessage.c_str(), device_id) == 0){//   receivedMessage == device_id){
-          //Sono in HARBOR e mi è arrivata l'autorizzazione di uscire, setto variabile e passo in OPEN_SEA
+        Serial.println("HARBOR MODE entrato");
+        if(strcmp(receivedMessage.c_str(), device_id) == 0){
           Serial.println(" HARBOR  arrivata l'autorizzazione di uscire, setto variabile e passo in OPEN_SEA");
           mode = OPEN_SEA;
           receivedMessage = "";
         }else{
-          //Sono in HARBOR e mi è arrivato un id diverso dal mio, non faccio niente
           Serial.println(" HARBOR nessuna azione");
           break;
         }
@@ -124,6 +131,7 @@ void onReceive(int packetSize){
 
           delete[] stolen_ids;
           stolen_ids = nullptr;
+          retransmission_check.clear();
     
           receivedMessage = "";
           break;
@@ -133,7 +141,10 @@ void onReceive(int packetSize){
             Serial.print(" STOLEN QTY:");
             Serial.print(stolen_boats_qty);
             for(int i = 0; i < stolen_boats_qty; i++){
-              if(stolen_ids[i] == receivedMessage){
+              if(stolen_ids[i] == receivedMessage && (retransmission_check[receivedMessage] < MAX_RETRANSMISSIONS_QTY)){  //caso in cui capto una rubata
+                Serial.print("captata rubata, contatore - attuale: ");
+                Serial.println(retransmission_check[receivedMessage]);
+                retransmission_check[receivedMessage]++;
                 strcpy(stolen_id, receivedMessage.c_str());
                 Serial.print("ok trovato: ");
                 Serial.print(stolen_id);
@@ -143,13 +154,13 @@ void onReceive(int packetSize){
           }
         }
         receivedMessage = "";
-      }else if(actual_char == '$'){
-        Serial.print("OKOK  ");
-        if(!stolen_found){
-          Serial.print(" SI:");
+      }else if(actual_char == '$'){ //caso in cui qualcuno ha ritrasmesso una rubata
+        if(!stolen_found && (retransmission_check[receivedMessage] < MAX_RETRANSMISSIONS_QTY)){
+          Serial.print("captata rubata, contatore - attuale: ");
+          Serial.println(retransmission_check[receivedMessage]);
+          retransmission_check[receivedMessage]++;
           Serial.print(device_id);
           strcpy(stolen_id, receivedMessage.c_str());
-          Serial.print(" SI:");
           Serial.print(device_id);
           stolen_found = true;
         }
@@ -206,8 +217,8 @@ void loop() {
     payload = payload + device_id + ':';// + stolen_origin +  stolen_id;
 
     Serial.print(payload);
-    LoRa.beginPacket();        // Inizia il pacchetto
-    LoRa.print(payload);       // Invia la stringa
+    LoRa.beginPacket();
+    LoRa.print(payload);
     LoRa.endPacket();
     LoRa.receive();
 
@@ -219,10 +230,10 @@ void loop() {
     String payload = "";
     payload = payload + device_id + ':' + stolen_id + '$' ;// + stolen_origin +  stolen_id;
 
-    Serial.print("\n OKOKOK INVIO: ");
+    Serial.print("\n invio barca rubata trovata ");
     Serial.print(payload);
-    LoRa.beginPacket();        // Inizia il pacchetto
-    LoRa.print(payload);       // Invia la stringa
+    LoRa.beginPacket();
+    LoRa.print(payload);
     LoRa.endPacket();
     LoRa.receive();
     stolen_found = false;
