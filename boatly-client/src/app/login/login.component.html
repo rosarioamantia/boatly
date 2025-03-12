@@ -1,0 +1,28 @@
+<div fxLayout="column" fxLayoutAlign="center center">
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" fxLayout="column" fxLayoutAlign="center center">
+    <div fxLayout="row">
+      <h1>Login</h1>
+    </div>
+
+    <div fxLayout="row">
+      <mat-form-field>
+        <mat-label>Username</mat-label>
+        <input formControlName="usernameControl" matInput>
+        <mat-error *ngIf="form.get('usernameControl')"> Required field </mat-error>
+      </mat-form-field>
+    </div>
+
+    <div fxLayout="row">
+      <mat-form-field>
+        <mat-label>Password</mat-label>
+        <input formControlName="passwordControl" type="password" matInput>
+        <mat-error *ngIf="form.get('passwordControl')"> Required field </mat-error>
+      </mat-form-field>
+    </div>
+
+    <div fxLayout="row">
+      <button mat-flat-button color="primary" type="submit"> Login </button>
+    </div>
+  </form>
+  
+</div>
