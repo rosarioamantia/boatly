@@ -1,5 +1,6 @@
 package com.rosario.boatly.boatly_server.service;
 
+import com.rosario.boatly.boatly_server.configuration.OutboundMQTTConfig;
 import com.rosario.boatly.boatly_server.model.DetectedStolen;
 import com.rosario.boatly.boatly_server.repository.BoatRepository;
 import com.rosario.boatly.boatly_server.model.Boat;
@@ -8,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -15,6 +17,12 @@ public class MQTTService {
 
     @Autowired
     BoatRepository boatRepository;
+
+    @Autowired
+    BoatService boatService;
+
+    @Autowired
+    private OutboundMQTTConfig.MyGateway gateway;
 
     @Autowired
     DetectedStolenRepository detectedStolenRepository;
@@ -64,5 +72,23 @@ public class MQTTService {
                     }
             );
         }
+    }
+
+    public void processMessageFor(String boatId){
+        String messageToSend = boatId + ":";
+        List<Boat> stolenBoats = boatService.getStolenBoats();
+
+        if(!stolenBoats.isEmpty()){
+            messageToSend += stolenBoats.size() + "_";
+
+            for(Boat boat : stolenBoats){
+                messageToSend += boat.getId() + "-";
+            }
+
+            messageToSend = messageToSend.substring(0, messageToSend.lastIndexOf('-')) + '$';
+
+        }
+
+        gateway.sendToMqtt(messageToSend);
     }
 }

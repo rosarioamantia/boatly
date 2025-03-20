@@ -13,7 +13,8 @@ public class Trip {
     private Integer id;
     private LocalDateTime date;
 
-    @OneToOne
+    @ManyToOne
+    @JoinColumn(name = "boat_id")
     private Boat boat;
 
     public Integer getId() {

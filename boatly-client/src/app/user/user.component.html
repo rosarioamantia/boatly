@@ -1,4 +1,75 @@
 <mat-tab-group>
-    <mat-tab label="My Boats"> Content 1 </mat-tab>
-    <mat-tab label="Register Boat"> Content 2 </mat-tab>  
+    <mat-tab label="My Boats">
+        <mat-grid-list cols="3" rowHeight="3:2">
+            <mat-grid-tile *ngFor="let boat of boats">
+                <mat-card>
+                    <mat-card-header>
+                        <mat-card-title>
+                            <span style="display: flex; align-items: center; gap: 8px;">
+                                <mat-icon>sailing</mat-icon> {{boat.name}}
+                            </span>
+                        </mat-card-title>
+                    </mat-card-header>
+                    <mat-card-content>
+                        <mat-divider></mat-divider>
+                        <div fxLayout="column">
+                            <div fxLayout="column">
+                                <span style="display: flex; align-items: center; gap: 8px;">
+                                    <mat-icon>location_on</mat-icon>
+                                    <p>In Harbor:</p> {{boat.inHarbor == true ? "yes" : "no"}}
+                                </span>
+                                <span style="display: flex; align-items: center; gap: 8px;">
+                                    <mat-icon>crisis_alert</mat-icon>
+                                    <p>Stolen:</p> {{boat.stolen == true ? "yes" : "no"}}
+                                </span>
+                                <span style="display: flex; align-items: center; gap: 8px;">
+                                    <mat-icon>access_time</mat-icon>
+                                    <p>Last Update:</p> {{boat.lastUpdate}}
+                                </span>
+                            </div>
+                        </div>
+                        <mat-divider></mat-divider>
+                    </mat-card-content>
+
+                    <mat-card-actions>
+                        <div fxLayout="row" fxLayoutAlign="center">
+                            <mat-slide-toggle color="primary" [checked]="!boat.inHarbor"
+                                (change)="onToggleChange($event, boat.id)">
+                                <p>{{ boat.inHarbor ? "Start Trip" : "Terminate Trip" }}</p>
+                            </mat-slide-toggle>
+                        </div>
+                    </mat-card-actions>
+                </mat-card>
+            </mat-grid-tile>
+        </mat-grid-list>
+    </mat-tab>
+    <mat-tab label="Insert Boat">
+        <div fxLayout="column" fxLayoutAlign="center center">
+            <form [formGroup]="registerBoatForm" (ngSubmit)="onInsertBoatSubmit()">
+                <div fxLayout="row">
+                    <mat-form-field appearance="fill">
+                        <mat-label>Boat ID</mat-label>
+                        <input maxlength="6" matInput formControlName="idControl">
+                        <mat-error *ngIf="registerBoatForm.get('idControl')?.errors?.['required']"> Required field </mat-error>
+                        <mat-error *ngIf="registerBoatForm.get('idControl')?.errors?.['minlength']">
+                            Length must be exactly 6 characters
+                        </mat-error>
+                    </mat-form-field>
+                </div>
+                <div fxLayout="row">
+                    <mat-form-field appearance="fill">
+                        <mat-label>Boat Name</mat-label>
+                        <input matInput formControlName="nameControl">
+                        <mat-error *ngIf="registerBoatForm.get('nameControl')"> Required field </mat-error>
+                    </mat-form-field>
+                </div>
+
+                <div fxLayout="row" fxLayoutAlign="center ">
+                    <button mat-raised-button color="primary" type="sumbit">Insert</button>
+                </div>
+
+
+            </form>
+        </div>
+    </mat-tab>
 </mat-tab-group>

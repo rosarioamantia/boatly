@@ -1,4 +1,64 @@
 <mat-tab-group>
-    <mat-tab label="Lista Barche"> Content 1 </mat-tab>
-    <mat-tab label="Lista Utenti"> Content 2 </mat-tab>  
+    <mat-tab label="Lista Barche">
+        <mat-grid-list cols="4" rowHeight="3:2">
+            <mat-grid-tile *ngFor="let boat of boats">
+                <mat-card>
+                    <mat-card-header>
+                        <mat-card-title>
+                            <span style="display: flex; align-items: center; gap: 8px;">
+                                <mat-icon>sailing</mat-icon> {{boat.name}}
+                            </span>
+                        </mat-card-title>
+                    </mat-card-header>
+                    <mat-card-content>
+                        <span style="display: flex; align-items: center; gap: 8px;">
+                            <mat-icon>location_on</mat-icon>
+                            <p>In Harbor:</p> {{boat.inHarbor == true ? "yes" : "no"}}
+                        </span>
+                        <span style="display: flex; align-items: center; gap: 8px;">
+                            <mat-icon>crisis_alert</mat-icon>
+                            <p>Stolen:</p> {{boat.stolen == true ? "yes" : "no"}}
+                        </span>
+                        <span style="display: flex; align-items: center; gap: 8px;">
+                            <mat-icon>access_time</mat-icon>
+                            <p>Last Update:</p> {{boat.lastUpdate}}
+                        </span>
+                        <span style="display: flex; align-items: center; gap: 8px;">
+                            <mat-icon>person</mat-icon>
+                            <p>Owner:</p> {{boat.user.name}} {{boat.user.surname}}
+                        </span>
+                    </mat-card-content>
+                </mat-card>
+            </mat-grid-tile>
+        </mat-grid-list>
+    </mat-tab>
+    <mat-tab label="Lista Clienti">
+        <mat-grid-list cols="4" rowHeight="3:2">
+            <mat-grid-tile *ngFor="let user of users">
+                <mat-card>
+                    <mat-card-header>
+                        <mat-card-title>
+                            <span style="display: flex; align-items: center; gap: 8px;">
+                                <mat-icon>person</mat-icon> {{user.name}} {{user.surname}}
+                            </span>
+                        </mat-card-title>
+                    </mat-card-header>
+                    <mat-card-content>
+                        <span style="display: flex; align-items: center; gap: 8px;">
+                            <mat-icon>key</mat-icon>
+                            <p>Role:</p> {{user.role == "ADMIN" ? "Administrator" : "User"}}
+                        </span>
+                        <span style="display: flex; align-items: center; gap: 8px;">
+                            <mat-icon>mail</mat-icon>
+                            <p>E-mail:</p> {{user.email}}
+                        </span>
+                        <span style="display: flex; align-items: center; gap: 8px;">
+                            <mat-icon>call</mat-icon>
+                            <p>Telephone:</p> {{user.phoneNumber}}
+                        </span>
+                    </mat-card-content>
+                </mat-card>
+            </mat-grid-tile>
+        </mat-grid-list>
+    </mat-tab>
 </mat-tab-group>

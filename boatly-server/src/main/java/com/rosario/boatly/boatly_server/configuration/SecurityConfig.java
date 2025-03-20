@@ -24,6 +24,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests()
                 .requestMatchers("/api/auth/login").permitAll()
                 .requestMatchers("/api/auth/register").permitAll()
+                .requestMatchers("/boats/**").permitAll()
+                .requestMatchers("/users/**").permitAll()
+                .requestMatchers("/trips/**").permitAll()
                 .requestMatchers("/api/auth/register/admin").permitAll()//.hasRole("ADMIN") //TODO fix it
                 .anyRequest().authenticated()
                 .and()

@@ -20,8 +20,6 @@ export class LoginComponent {
   errorMessage = '';
   form: FormGroup;
 
-  title = 'angular-login-example';
-
   constructor(private authService: AuthService, private router: Router) {
     this.form = new FormGroup({
       usernameControl: new FormControl('', [Validators.required]),
@@ -29,9 +27,10 @@ export class LoginComponent {
     });
   }
 
+  ngOnInit(): void { }
+
   public onSubmit() {
     if (this.form.valid) {
-      alert("entrato");
       const formData = this.form.value;
 
       this.username = formData.usernameControl;
@@ -39,7 +38,7 @@ export class LoginComponent {
 
       this.authService.login(this.username!, this.password!).subscribe({
         next: (response) => {
-          this.authService.saveToken(response.token);
+          this.authService.saveToken(response.jwtToken);
           this.authService.saveRole(response.role);
 
           if (response.role == "ADMIN") {
@@ -53,9 +52,9 @@ export class LoginComponent {
         }
       });
     }
-
-
   }
 
-  ngOnInit(): void { }
+  public onClickSignup(){
+    this.router.navigate(['signup']);
+  }
 }

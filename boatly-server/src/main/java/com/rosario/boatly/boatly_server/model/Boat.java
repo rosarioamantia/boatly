@@ -9,23 +9,31 @@ import java.time.LocalDateTime;
 @Table(name = "boats")
 public class Boat {
     @Id
-    @GeneratedValue(strategy= GenerationType.IDENTITY)
     @Column(name = "id")
     private String id;
+    @Column(unique = true, nullable = false)
     private String name;
+
+    @Column(nullable = false)
     private boolean stolen;
+    @Column(nullable = false)
     private LocalDateTime lastUpdate;
+    @Column(nullable = false)
     private boolean inHarbor;
+
+    @ManyToOne
+    private User user;
 
     public Boat() {
     }
 
-    public Boat(String id, String name, boolean stolen, LocalDateTime lastUpdate, boolean inHarbor) {
+    public Boat(String id, String name, boolean stolen, LocalDateTime lastUpdate, boolean inHarbor, User user) {
         this.id = id;
         this.name = name;
         this.stolen = stolen;
         this.lastUpdate = lastUpdate;
         this.inHarbor = inHarbor;
+        this.user = user;
     }
 
     // Getter e Setter
@@ -69,14 +77,11 @@ public class Boat {
         this.inHarbor = inHarbor;
     }
 
-    // toString per debug e logging
-    @Override
-    public String toString() {
-        return "Boat{" +
-                "id='" + id + '\'' +
-                ", name='" + name + '\'' +
-                ", stolen=" + stolen +
-                ", lastUpdate=" + lastUpdate +
-                '}';
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 }

@@ -25,7 +25,7 @@ public class CheckTask {
     @Autowired
     TripService tripService;
 
-    @Scheduled(fixedRate = 20000)  // 300000 ms = 5 minutes
+    @Scheduled(fixedRate = 600000)  // 300000 ms = 5 minutes
     public void identifyStolenBoats() {
         System.out.println("Routine eseguita!");
         System.out.println(LocalDateTime.now());

@@ -3,6 +3,7 @@ package com.rosario.boatly.boatly_server.controller;
 import com.rosario.boatly.boatly_server.model.LoginRequest;
 import com.rosario.boatly.boatly_server.model.LoginResponse;
 import com.rosario.boatly.boatly_server.model.User;
+import com.rosario.boatly.boatly_server.model.UserDTO;
 import com.rosario.boatly.boatly_server.service.JwtService;
 import com.rosario.boatly.boatly_server.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,20 +23,21 @@ public class AuthController {
     private JwtService jwtService;
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody LoginRequest request) {
+    public ResponseEntity<?> register(@RequestBody UserDTO user) {
         System.out.println("entrato");
         try {
-            User newUser = userService.registerUser(request.getUsername(), request.getPassword(), "USER");
-            return ResponseEntity.ok("Utente registrato con successo");
+            User newUser = userService.registerUser(user);
+            //return ResponseEntity.ok(new LoginResponse("token", user.getRole()));
+            return ResponseEntity.status(HttpStatus.OK).body(user);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
         }
     }
 
     @PostMapping("/register/admin")
-    public ResponseEntity<?> registerAdmin(@RequestBody LoginRequest request) {
+    public ResponseEntity<?> registerAdmin(@RequestBody UserDTO user) {
         try {
-            userService.registerUser(request.getUsername(), request.getPassword(), "ADMIN");
+            userService.registerAdmin(user);
             return ResponseEntity.ok("Admin registrato con successo");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());

@@ -1,7 +1,7 @@
 <mat-toolbar color="primary">
     <span>{{title}}</span>
     <span class="icon-spacer"></span>
-    <button (click)="logout()" mat-icon-button class="logout-icon" aria-label="Example icon-button with heart icon">
+    <button *ngIf="isAuthenticated()" (click)="logout()" mat-icon-button aria-label="Example icon-button with heart icon">
         <mat-icon>logout</mat-icon>
     </button>
 </mat-toolbar>

@@ -1,0 +1,64 @@
+<div fxLayout="column" fxLayoutAlign="center center">
+    <form [formGroup]="signupForm" (ngSubmit)="onSubmit()" fxLayout="column" fxLayoutAlign="center center">
+      <div fxLayout="row">
+        <h1>Signup</h1>
+      </div>
+  
+      <div fxLayout="row">
+        <mat-form-field>
+          <mat-label>Username</mat-label>
+          <input formControlName="usernameControl" matInput>
+          <mat-error *ngIf="signupForm.get('usernameControl')"> Required field </mat-error>
+        </mat-form-field>
+      </div>
+  
+      <div fxLayout="row">
+        <mat-form-field>
+          <mat-label>Password</mat-label>
+          <input formControlName="passwordControl" type="password" matInput>
+          <mat-error *ngIf="signupForm.get('passwordControl')"> Required field </mat-error>
+        </mat-form-field>
+      </div>
+
+      <div fxLayout="row">
+        <mat-form-field>
+          <mat-label>Email</mat-label>
+          <input formControlName="emailControl" matInput>
+          <mat-error *ngIf="signupForm.get('emailControl')"> Required field </mat-error>
+        </mat-form-field>
+      </div>
+
+      <div fxLayout="row">
+        <mat-form-field>
+          <mat-label>Name</mat-label>
+          <input formControlName="nameControl" matInput>
+          <mat-error *ngIf="signupForm.get('nameControl')"> Required field </mat-error>
+        </mat-form-field>
+      </div>
+
+      <div fxLayout="row">
+        <mat-form-field>
+          <mat-label>Surname</mat-label>
+          <input formControlName="surnameControl" matInput>
+          <mat-error *ngIf="signupForm.get('surnameControl')"> Required field </mat-error>
+        </mat-form-field>
+      </div>
+
+      <div fxLayout="row">
+        <mat-form-field>
+          <mat-label>Telephone</mat-label>
+          <input formControlName="telephoneControl" matInput>
+          <mat-error *ngIf="signupForm.get('telephoneControl')"> Required field </mat-error>
+        </mat-form-field>
+      </div>
+  
+      <div fxLayout="row">
+        <button mat-flat-button color="primary" type="submit"> Sign up </button>
+      </div>
+  
+    </form>
+    
+    <div fxLayout="row" fxFlexOffset="10px">
+      <button mat-flat-button color="primary" (click)="onClickLogin()"> Return to login </button>
+    </div>
+  </div>

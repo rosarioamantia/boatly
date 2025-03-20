@@ -1,10 +1,19 @@
 package com.rosario.boatly.boatly_server.service;
 
+
+import com.rosario.boatly.boatly_server.BoatlyServerApplication;
+import com.rosario.boatly.boatly_server.configuration.OutboundMQTTConfig;
+import com.rosario.boatly.boatly_server.model.Boat;
 import com.rosario.boatly.boatly_server.model.Trip;
 import com.rosario.boatly.boatly_server.repository.TripRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.WebApplicationType;
+import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.cglib.core.Local;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.stereotype.Service;
+import com.rosario.boatly.boatly_server.repository.BoatRepository;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -18,6 +27,12 @@ public class TripService {
 
     @Autowired
     public TripRepository tripRepository;
+
+    @Autowired
+    public BoatRepository boatRepository;
+
+    @Autowired
+    MQTTService mqttService;
 
     public Optional<Trip> getRegisteredTripByBoatId(String boatId){
         Optional<Trip> registeredTrip = tripRepository.findByBoatId(boatId).stream().filter(trip -> isTripCreatedToday(trip.getDate())).findFirst();
@@ -35,5 +50,32 @@ public class TripService {
         Optional<Trip> registeredTrip = getRegisteredTripByBoatId(boatId);
 
         return registeredTrip.isPresent();
+    }
+
+    @Transactional
+    public Boat processTrip(String boatId){
+        Optional<Boat> boatToUpdateOptional = boatRepository.findById(boatId);
+        if(boatToUpdateOptional.isPresent()){
+            Boat boatToUpdate = boatToUpdateOptional.get();
+
+            if(boatToUpdate.isInHarbor()){
+                boatToUpdate.setInHarbor(false);
+
+                Trip newTrip = new Trip();
+                newTrip.setBoat(boatToUpdate);
+                newTrip.setDate(LocalDateTime.now());
+                tripRepository.save(newTrip);
+            }else{
+                boatToUpdate.setInHarbor(true);
+            }
+            boatRepository.save(boatToUpdate);
+
+            //send message by mqtt outbound
+            mqttService.processMessageFor(boatId);
+
+
+            return boatToUpdate;
+        }
+        return null;
     }
 }

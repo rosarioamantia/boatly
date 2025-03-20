@@ -15,4 +15,11 @@ export class AppComponent {
   public logout(){
     this.authService.logout();
   }
+
+  public isAuthenticated(){
+    if(this.authService.getToken() != null && this.authService.getToken() != null){
+      return true;
+    }
+    return false;
+  }
 }

@@ -3,32 +3,14 @@ package com.rosario.boatly.boatly_server.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
-@Entity
-@Table(name = "users")
-public class User {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+public class UserDTO {
     private Long id;
-
-    @Column(unique = true, nullable = false)
     private String username;
-
-    @JsonIgnore
-    @Column(nullable = false)
     private String password;
-    @Column(nullable = false)
     private String role;
-
-    @Column(nullable = false)
     private String email;
-
-    @Column(nullable = false)
     private String name;
-
-    @Column(nullable = false)
     private String surname;
-
-    @Column(nullable = false)
     private String phoneNumber;
 
     public Long getId() {
@@ -94,4 +76,5 @@ public class User {
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
     }
+
 }

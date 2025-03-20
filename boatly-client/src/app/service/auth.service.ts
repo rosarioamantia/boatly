@@ -1,7 +1,8 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
+import { UserDto } from '../model/user-dto';
 
 @Injectable({
   providedIn: 'root'
@@ -12,11 +13,14 @@ export class AuthService {
   constructor(private http: HttpClient, private router: Router) {}
 
   login(username: string, password: string): Observable<any> {
+    const token = localStorage.getItem('authToken');
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+    
     return this.http.post<any>(this.apiUrl + "/login", { username, password });
   }
 
-  registerUser(username: string, password: string): Observable<any> {
-    return this.http.post<any>(this.apiUrl + "/register", { username, password });
+  registerUser(user: UserDto): Observable<any> {
+    return this.http.post<any>(this.apiUrl + "/register",user);
   }
 
   registerAdmin(username: string, password: string): Observable<any> {

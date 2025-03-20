@@ -1,20 +1,20 @@
 package com.rosario.boatly.boatly_server.model;
 
 public class LoginResponse {
-    private String jwt;
+    private String jwtToken;
     private String role;
 
-    public LoginResponse(String jwt, String role) {
-        this.jwt = jwt;
+    public LoginResponse(String jwtToken, String role) {
+        this.jwtToken = jwtToken;
         this.role = role;
     }
 
-    public String getJwt() {
-        return jwt;
+    public String getJwtToken() {
+        return jwtToken;
     }
 
-    public void setJwt(String jwt) {
-        this.jwt = jwt;
+    public void setJwtToken(String jwtToken) {
+        this.jwtToken = jwtToken;
     }
 
     public String getRole() {

@@ -11,7 +11,6 @@ export class AuthGuard implements CanActivate {
 
   canActivate(route: ActivatedRouteSnapshot): boolean {
     if (this.authService.getToken()) {
-      debugger;
       const expectedRole = route.data['role']; // Ruolo richiesto dalla rotta
       const userRole = this.authService.getRole();
 

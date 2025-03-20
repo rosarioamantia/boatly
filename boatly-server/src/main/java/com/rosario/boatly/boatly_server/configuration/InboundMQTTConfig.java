@@ -18,7 +18,6 @@ import org.springframework.messaging.MessagingException;
 @IntegrationComponentScan
 @Configuration
 public class InboundMQTTConfig {
-    // chiamare InboundMQTTConfig
 
     @Autowired
     MQTTService mqttService;
@@ -27,14 +26,6 @@ public class InboundMQTTConfig {
     public MessageChannel mqttInputChannel() {
         return new DirectChannel();
     }
-
-    /*
-    @Bean
-    public MessageChannel mqttInputChannel2() {
-        return new DirectChannel();
-    }
-
-     */
 
     @Bean
     public MessageProducer inbound() {
@@ -48,21 +39,6 @@ public class InboundMQTTConfig {
         return adapter;
     }
 
-    /*
-    @Bean
-    public MessageProducer inbound2() {
-        MqttPahoMessageDrivenChannelAdapter adapter =
-                new MqttPahoMessageDrivenChannelAdapter("tcp://broker.hivemq.com:1883", "testClient2",
-                        "boatly/presenc");
-        adapter.setCompletionTimeout(15000);
-        adapter.setConverter(new DefaultPahoMessageConverter());
-        adapter.setQos(2);
-        adapter.setOutputChannel(mqttInputChannel2());
-        return adapter;
-    }
-
-     */
-
     @Bean
     @ServiceActivator(inputChannel = "mqttInputChannel")
     public MessageHandler handler() {
@@ -74,20 +50,4 @@ public class InboundMQTTConfig {
             }
         };
     }
-
-    /*
-    @Bean
-    @ServiceActivator(inputChannel = "mqttInputChannel2")
-    public MessageHandler handler2() {
-        return new MessageHandler() {
-            @Override
-            public void handleMessage(Message<?> message) throws MessagingException {
-                System.out.println((String) message.getPayload());
-                System.out.println( ( message.getPayload()).getClass());
-            }
-
-        };
-    }
-
-     */
 }
