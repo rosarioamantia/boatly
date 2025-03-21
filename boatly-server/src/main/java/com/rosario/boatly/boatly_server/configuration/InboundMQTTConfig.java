@@ -31,7 +31,7 @@ public class InboundMQTTConfig {
     public MessageProducer inbound() {
         MqttPahoMessageDrivenChannelAdapter adapter =
                 new MqttPahoMessageDrivenChannelAdapter("tcp://broker.emqx.io:1883", "testClient",
-                        "test/receiver");
+                        "boatly/event");
         adapter.setCompletionTimeout(15000);
         adapter.setConverter(new DefaultPahoMessageConverter());
         adapter.setQos(2);
@@ -45,7 +45,6 @@ public class InboundMQTTConfig {
         return new MessageHandler() {
             @Override
             public void handleMessage(Message<?> message) throws MessagingException {
-                System.out.println("OKOK " + message.getPayload());
                 mqttService.parseMessage(message.getPayload().toString());
             }
         };

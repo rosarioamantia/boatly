@@ -99,7 +99,7 @@ void setup(){
       }
   }
 
-  mqttClient.subscribe("test/rosario");
+  mqttClient.subscribe("boatly/command");
   LoRa.onReceive(onReceive);
   LoRa.receive();
 }
@@ -107,8 +107,7 @@ void setup(){
 void loop(){
 
   if(outbound_mqtt == true){
-    Serial.print("\nOKOK\n");
-    mqttClient.publish("test/receiver", outbound_mqtt_message.c_str());
+    mqttClient.publish("boatly/event", outbound_mqtt_message.c_str());
     outbound_mqtt_message.clear();
     outbound_mqtt = false;
   }

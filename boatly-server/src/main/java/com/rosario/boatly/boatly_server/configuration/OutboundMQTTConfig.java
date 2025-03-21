@@ -38,7 +38,7 @@ public class OutboundMQTTConfig {
         MqttPahoMessageHandler messageHandler =
                 new MqttPahoMessageHandler("testClient", mqttClientFactory());
         messageHandler.setAsync(true);
-        messageHandler.setDefaultTopic("test/rosario");
+        messageHandler.setDefaultTopic("boatly/command");
         return messageHandler;
     }
 
