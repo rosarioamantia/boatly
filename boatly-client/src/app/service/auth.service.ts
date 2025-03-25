@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { UserDto } from '../model/user-dto';
+import { WebSocketService } from './web-socket.service';
 
 @Injectable({
   providedIn: 'root'
@@ -10,7 +11,9 @@ import { UserDto } from '../model/user-dto';
 export class AuthService {
   private apiUrl = 'http://localhost:8080/api/auth';
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(
+    private http: HttpClient,
+    private router: Router) {}
 
   login(username: string, password: string): Observable<any> {
     const token = localStorage.getItem('authToken');

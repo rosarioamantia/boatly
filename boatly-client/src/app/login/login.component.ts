@@ -6,6 +6,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { AuthService } from '../service/auth.service';
 import { Router } from '@angular/router';
 import { MatDividerModule } from '@angular/material/divider';
+import { WebSocketService } from '../service/web-socket.service';
 
 
 @Component({
@@ -20,7 +21,7 @@ export class LoginComponent {
   errorMessage = '';
   form: FormGroup;
 
-  constructor(private authService: AuthService, private router: Router) {
+  constructor(private authService: AuthService, private router: Router, private webSocketService: WebSocketService) {
     this.form = new FormGroup({
       usernameControl: new FormControl('', [Validators.required]),
       passwordControl: new FormControl('', [Validators.required])
@@ -40,6 +41,8 @@ export class LoginComponent {
         next: (response) => {
           this.authService.saveToken(response.jwtToken);
           this.authService.saveRole(response.role);
+          //this.webSocketService.connect();
+
 
           if (response.role == "ADMIN") {
             this.router.navigate(['admin/dashboard']);

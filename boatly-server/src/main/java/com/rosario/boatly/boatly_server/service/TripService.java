@@ -12,6 +12,7 @@ import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.cglib.core.Local;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import com.rosario.boatly.boatly_server.repository.BoatRepository;
 
@@ -33,6 +34,13 @@ public class TripService {
 
     @Autowired
     MQTTService mqttService;
+
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
+
+    public List<Trip> getAllTrips(){
+        return tripRepository.findAll();
+    }
 
     public Optional<Trip> getRegisteredTripByBoatId(String boatId){
         Optional<Trip> registeredTrip = tripRepository.findByBoatId(boatId).stream().filter(trip -> isTripCreatedToday(trip.getDate())).findFirst();
@@ -64,7 +72,9 @@ public class TripService {
                 Trip newTrip = new Trip();
                 newTrip.setBoat(boatToUpdate);
                 newTrip.setDate(LocalDateTime.now());
-                tripRepository.save(newTrip);
+
+                Trip savedTrip = tripRepository.save(newTrip);
+                messagingTemplate.convertAndSend("/boatly/trips", newTrip);
             }else{
                 boatToUpdate.setInHarbor(true);
             }

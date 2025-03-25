@@ -26,6 +26,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/register").permitAll()
                 .requestMatchers("/boats/**").permitAll()
                 .requestMatchers("/users/**").permitAll()
+                .requestMatchers("/detected-stolens/**").permitAll()
+                .requestMatchers("/ws/**").permitAll()
                 .requestMatchers("/trips/**").permitAll()
                 .requestMatchers("/api/auth/register/admin").permitAll()//.hasRole("ADMIN") //TODO fix it
                 .anyRequest().authenticated()

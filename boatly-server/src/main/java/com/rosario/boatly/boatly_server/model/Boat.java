@@ -13,7 +13,6 @@ public class Boat {
     private String id;
     @Column(unique = true, nullable = false)
     private String name;
-
     @Column(nullable = false)
     private boolean stolen;
     @Column(nullable = false)

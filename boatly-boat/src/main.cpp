@@ -304,7 +304,7 @@ void loop() {
 
     checkWind();
 
-    String payload = " Sending: ";
+    String payload = "";
     payload = payload + device_id + ':';// + stolen_origin +  stolen_id;
 
     Serial.print(payload);
@@ -319,7 +319,7 @@ void loop() {
 
   if(stolen_found){
     String payload = "";
-    payload = payload + device_id + ':' + stolen_id + '$' ;// + stolen_origin +  stolen_id;
+    payload = payload + device_id + ':' + stolen_id + '$' ;
 
     Serial.print("\n invio barca rubata trovata ");
     Serial.print(payload);

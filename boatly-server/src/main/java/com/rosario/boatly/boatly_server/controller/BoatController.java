@@ -43,6 +43,12 @@ public class BoatController {
         return ResponseEntity.ok(boats);
     }
 
+    @PatchMapping("")
+    public ResponseEntity updateBoat(@RequestBody Boat boat){
+        boat = boatService.updateBoat(boat);
+        return ResponseEntity.ok(boat);
+    }
+
     private String getUsernameFromToken(HttpServletRequest request) {
         String token = request.getHeader("Authorization").substring(7);
         return jwtUtil.extractUsername(token);

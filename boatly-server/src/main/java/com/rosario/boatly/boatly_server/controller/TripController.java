@@ -1,6 +1,7 @@
 package com.rosario.boatly.boatly_server.controller;
 
 import com.rosario.boatly.boatly_server.model.Boat;
+import com.rosario.boatly.boatly_server.model.Trip;
 import com.rosario.boatly.boatly_server.model.User;
 import com.rosario.boatly.boatly_server.service.TripService;
 import com.rosario.boatly.boatly_server.service.UserService;
@@ -22,5 +23,12 @@ public class TripController {
     public ResponseEntity registerTrip(@RequestParam String boatId){
         Boat updatedBoat = tripService.processTrip(boatId);
         return ResponseEntity.status(HttpStatus.CREATED).body(updatedBoat);
+    }
+
+    @GetMapping("")
+    public ResponseEntity getTrips(){
+        List<Trip> trips = tripService.getAllTrips();
+
+        return ResponseEntity.ok(trips);
     }
 }
